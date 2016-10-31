@@ -1,0 +1,88 @@
+<% #main %>
+<h1>
+   <% response.title %>
+   <% images.link create ' ' class='uk-icon-button uk-icon-plus uk-text-middle' %>
+</h1>
+<% if <% images.self _parent %> is 'HopObject layout' then '' else
+   <% images.link . <% gettext All %> %>
+%>
+<% images.link user <% membership.name %> prefix=" | " %>
+<% response.pager %>
+<table class='uk-table uk-table-striped uk-table-hover uk-table-condensed'>
+   <thead>
+      <tr>
+         <th></th>
+         <!--
+         <th><% gettext Type %></th>
+         <th><% gettext Size %></th>
+         -->
+         <th><% gettext Dimensions %></th>
+         <th><% gettext Account %></th>
+         <th><% gettext Modified %></th>
+         <th></th>
+         <th></th>
+      </tr>
+   </thead>
+   <tbody>
+      <% response.list %>
+   </tbody>
+</table>
+<% response.pager %>
+
+<% #upload %>
+<div class='uk-hidden av-upload-drop'>
+   <i class='uk-icon uk-icon-cloud-upload'></i>
+</div>
+
+<script>
+  // Setup drag&drop for image uploads
+  (function() {
+    const dropElement = document.querySelector('.av-upload-drop');
+    const parent = location.href.lastIndexOf('/layout/images/') > -1 ? 'layout' : 'site';
+    const uploadUrl = '<% site.images.href upload %>?parent=' + parent;
+
+    let dropTimer;
+    let dropHasHilite;
+
+    ['dragstart', 'dragenter', 'dragover'].forEach(function(type) {
+      document.addEventListener(type, function() {
+        if (!dropHasHilite) {
+          dropElement.classList.remove('uk-hidden');
+          dropHasHilite = true;
+        }
+      });
+    });
+
+    ['dragleave', 'dragend'].forEach(function(type) {
+      dropHasHilite = false;
+      clearTimeout(dropTimer);
+      dropTimer = setTimeout(function() {
+        dropHasHilite || dropElement.classList.add('uk-hidden');
+      }, 100);
+    });
+
+    const restoreDrop = function() {
+      dropElement.classList.add('uk-hidden');
+      dropElement.querySelector('i').classList.remove('av-upload-glow');
+    };
+
+    UIkit.uploadDrop(document, {
+      action: uploadUrl,
+      allow: '*.(jpg|jpeg|gif|png)',
+
+      loadstart: function() {
+        dropElement.querySelector('i').classList.add('av-upload-glow');
+      },
+
+      //progress: function(percent) {},
+
+      allcomplete: function(response) {
+        location.href = response;
+      },
+
+      notallowed: restoreDrop,
+      error: restoreDrop,
+      abort: restoreDrop
+    });
+  })();
+</script>

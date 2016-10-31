@@ -1,0 +1,19 @@
+<% #main %>
+<h1><% image.name %></h1>
+<div class="uk-article-meta">
+   <% gettext "Posted by {0} on {1}" <% image.creator %> <% image.created short %> %>
+</div>
+<div class='av-image-box uk-margin-top'>
+   <figure>
+      <a href='<% image.url %>'>
+         <% image.render class='uk-thumbnail' %>
+      </a>
+      <% image.description prefix="<figcaption class='uk-text-small'>" suffix=</figcaption> %>
+   </figure>
+</div>
+<div class='uk-margin-top'>
+  <% image.link edit <% gettext Edit %> class='uk-button' %>
+</div>
+
+<% #preview %>
+<p><% image.render | image.link %></p>

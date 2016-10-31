@@ -1,0 +1,25 @@
+<% #listItem %>
+<tr>
+   <td class='uk-width-1-2 av-overflow'>
+      <a href='<% comment.href %>'><% comment.abstract %></a> <% if <% comment.comments count %> is 0 then '' else <% comment.comments count prefix="<span class='uk-text-muted uk-text-nowrap'><i class='uk-icon-comments-o'></i> " suffix=</span> %> %>
+   </td>
+   <td class='uk-truncate'><% comment.creator %></td>
+   <td class='uk-truncate' title='<% comment.modified short %>' data-uk-tooltip="{pos: 'top-left'}">
+      <% comment.modified text %>
+   </td>
+   <td class='uk-text-right uk-text-nowrap'>
+      <a href='<% comment.story.href %>' title='<% comment.story.abstract | escapeXml %>' data-uk-tooltip="{pos: 'left'}"><i class='uk-icon-newspaper-o'></i></a>
+      <% comment.link delete "<i class='uk-icon-trash-o'></i>" %>
+      <% comment.link edit "<i class='uk-icon-pencil'></i>" %>
+   </td>
+</tr>
+
+<% #delete %>
+<div class='uk-alert uk-alert-warning av-alert-confirm' x-data='{ confirm: false, confirmed: false }' hidden :hidden='false'>
+  <input type="checkbox" id="mode" name="mode" value="user" @click='confirm = document.querySelector("button").disabled = !confirm'/>
+  <label for="mode"><% gettext "Erase all comments of user {0}" <% comment.creator %> %></label>
+  <div id="confirmation" x-show='confirm'>
+    <input type="checkbox" id="confirm" name="confirm" value="1" x-model='confirmed' @click='confirmed = !confirmed; document.querySelector("button").disabled = !confirmed'/>
+    <label for="confirm"><% ngettext "Yes, really erase {0} comment" "Yes, really erase {0} comments" <% comment.related.size %> %></label>
+  </div>
+</div>

@@ -1,0 +1,103 @@
+<% #listItem %>
+<tr>
+   <td><% skin.name prefix=<% skin.prototype suffix=. %> %></td>
+   <td><% skin.creator %></td>
+   <td title='<% skin.modified short %>' data-uk-tooltip="{pos: 'top-left'}">
+      <% skin.modified text %>
+   </td>
+   <td class='uk-text-muted uk-text-right'><% if <% skin.custom %> is true then "<i class='uk-icon-user'></i>" %></td>
+   <td class='uk-text-right uk-text-nowrap;'>
+      <a href='javascript:' class='av-clipboard-copy' data-text='<% gettext 'Press CTRL & C to copy to clipboard.' %>' data-value="<% skin.macro %>"><i class='uk-icon-clipboard'></i></a>
+      <% skin.link compare "<i class='uk-icon-files-o'></i>"%>
+      <% skin.link reset "<i class='uk-icon-undo'></i>" %>
+      <% skin.link edit "<i class='uk-icon-pencil'></i>" %>
+   </td>
+</tr>
+
+<% #edit %>
+<form class='uk-form av-skin-editor' method="post" action="<% response.action %>">
+   <div class='uk-margin-top uk-margin-left uk-margin-right uk-clearfix'>
+      <h1 class='uk-margin-large-right uk-float-left'><% response.title %></h1>
+      <span style='line-height: 39px;'>
+         <span class='uk-article-meta' style='vertical-align: bottom; display: inline-block;'>
+            <% skin.skin $HopObject#meta %>
+         </span>
+         <% if <% skin.name %> is '' then
+            <% skin.select prototype suffix=<% skin.input name class='uk-width-1-4' %> %>
+         %>
+         <button type="submit" name="save" value="1" class='uk-button uk-button-primary uk-margin-large-left'>
+            <% gettext "Save" %>
+         </button>
+         <% skin.link compare <% gettext Compare %> class='uk-button' %>
+         <a href='<% layout.skins.href all %>' class='uk-button uk-button-link'><% gettext Cancel %></a>
+      </span>
+      <% response.message prefix="<div class='uk-alert' data-uk-alert>" suffix=</div> %>
+   </div>
+   <% skin.textarea source %>
+</form>
+
+<script>
+  (function() {
+    // Setup skin editor
+    let mode = 'application/x-helma-skin';
+
+    if (location.href.indexOf('stylesheet') > -1) {
+      mode = 'text/css';
+    } else if (location.href.indexOf('javascript') > -1) {
+      mode = 'text/javascript';
+    }
+
+    CodeMirror.fromTextArea(document.querySelector('#source'), {
+      autofocus: true,
+      enterMode: 'keep',
+      indentUnit: 3,
+      indentWithTabs: false,
+      lineNumbers: true,
+      matchBrackets: true,
+      mode: mode,
+      tabMode: 'shift',
+      tabSize: 3,
+      viewportMargin: Infinity
+    });
+  })();
+</script>
+
+<% #compare %>
+<form>
+   <div class='uk-margin-top uk-margin-left uk-clearfix'>
+      <h1 class='uk-margin-large-right uk-float-left'><% response.title %></h1>
+      <span style='line-height: 42px;'>
+         <% skin.link edit <% gettext Edit %> class='uk-button uk-button-primary' %>
+         <% skin.link reset <% gettext Reset %> class='uk-button' %>
+         <a href='<% request.http_referer %>' class='uk-button uk-button-link'><% gettext Cancel %></a>
+      </span>
+   </div>
+   <div>
+      <% response.message prefix="<div class='uk-alert' data-uk-alert>" suffix=</div> %>
+      <table class='uk-table uk-table-condensed uk-table-striped'>
+         <thead>
+            <tr>
+               <th></th>
+               <th><% gettext 'Modified skin' %></th>
+               <th></th>
+               <th><% gettext 'Original skin' %></th>
+            </tr>
+         </thead>
+         <tbody>
+            <% response.diff %>
+         </tbody>
+      </table>
+   </div>
+</form>
+
+<% #difference %>
+<tr>
+   <td class='uk-text-muted uk-text-right'><% param.leftLineNumber %></td>
+   <td class='uk-width-1-2 av-overflow <% param.leftStatus prefix='av-line-' %>'>
+      <div class='av-line'><% param.left %></div>
+   </td>
+   <td class='uk-text-muted uk-text-right'><% param.rightLineNumber %></td>
+   <td class='uk-width-1-2 av-overflow <% param.rightStatus prefix='av-line-' %>'>
+      <div class='av-line'><% param.right %></div>
+   </td>
+</tr>

@@ -1,0 +1,85 @@
+<% #page %>
+<!DOCTYPE html>
+<html <% site.locale prefix='lang=' %>>
+   <head>
+      <meta charset='utf-8'>
+      <title><% response.title %></title>
+      <link rel="stylesheet" type="text/css" href="<% site.href main.css %>">
+      <link rel='stylesheet' type='text/css' href='<% root.static ../../styles/editor.min.css %>'>
+      <style type="text/css">
+         body {
+            margin: 0;
+            padding: 0;
+            background: none;
+         }
+         .cm-helma-macro {
+            color: #000;
+         }
+         .CodeMirror {
+            height: auto;
+            border-top: 1px solid #eee;
+         }
+         .av-line {
+            font-family: monospace;
+            white-space: pre-wrap;
+         }
+         .av-line-removed {
+            background-color: #fff1f0;
+         }
+         .av-line-added {
+            background-color: #f2fae3;
+         }
+      </style>
+      <script src='<% site.href main.js %>'></script>
+      <script src='<% root.static ../../scripts/editor.min.js %>'></script>
+   </head>
+   <body>
+      <span class='uk-margin-right uk-float-right'>
+         <% image /smallchaos.gif | link <% site.href %> %>
+      </span>
+      <% response.body %>
+   </body>
+</html>
+
+<% #header %>
+<h1>
+   <% response.title %>
+   <% skins.link create ' ' class='uk-icon-button uk-icon-plus uk-text-middle' %>
+</h1>
+<div class='uk-margin-top'>
+   <% skins.link main <% gettext Basic %> %>
+   <% skins.link modified <% gettext Modified %> prefix=" | " %>
+   <% skins.link all <% gettext All %> prefix=" | " %>
+</div>
+
+<% #main %>
+<% skins.skin $Skins#header %>
+<dl class='uk-margin-top uk-description-list-line'>
+   <dt><% skins.link Site/page/edit <% gettext "Site Page" %> %></dt>
+   <dd><% gettext "This skin defines the basic structure of your site. Modifying it will affect the general appearance of your site." %></dd>
+   <dt><% skins.link Site/main/edit <% gettext 'Start Page' %> %></dt>
+   <dd><% gettext "This skin is used to render the start page of your site." %></dd>
+   <dt><% skins.link Site/navigation/edit <% gettext Navigation %> %></dt>
+   <dd><% gettext "This skin is used to display the navigation links on the page." %></dd>
+   <dt><% skins.link Site/stylesheet/edit <% gettext Stylesheet %> %></dt>
+   <dd><% gettext "This skin contains the Cascading Stylesheet (CSS) definitions, e.g. fonts, font sizes, colors etc. Modifying this skin will affect the general appearance of your site." %></dd>
+   <dt><% skins.link Site/javascript/edit <% gettext JavaScript %> %></dt>
+   <dd><% gettext "This skin contains additional JavaScript code that will be included in every page." %></dd>
+</dl>
+
+<% #list %>
+<% skins.skin $Skins#header %>
+<table class='uk-table uk-table-striped uk-table-hover uk-table-condensed'>
+   <thead>
+      <tr>
+         <th><% gettext Name %></th>
+         <th><% gettext Account %></th>
+         <th><% gettext Modified %></th>
+         <th></th>
+         <th></th>
+      </tr>
+   </thead>
+   <tbody>
+      <% response.list %>
+   </tbody>
+</table>

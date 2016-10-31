@@ -1,0 +1,8 @@
+<% #status %>
+<% gettext 'System is up and running.' %>
+
+<% #urlPreview %>
+<% // This snippet contains additional markup to be rendered client-side by Alpine %>
+<a :href='"<% root.href %>" + name'>
+  <strong x-show='name' x-text='"<% root.href %>" + name'></strong>
+</a>

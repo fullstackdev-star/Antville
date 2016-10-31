@@ -1,0 +1,60 @@
+<% #listItem %>
+<tr>
+   <td class='uk-text-right'><% tag.size %></td>
+   <td>
+      <a href='<% tag.href action=<% request.action encoding='form' %> %>'><% tag.name %></a>
+   </td>
+   <td class='uk-text-right uk-text-nowrap'>
+      <% tag.link rss.xml "<i class='uk-icon-rss'></i>" %>
+      <% tag.link delete "<i class='uk-icon-trash-o'></i>" @click.prevent=<% tag.name prefix='remove(\'' suffix='\', $event)' %> hidden=hidden :hidden='false' %>
+      <% tag.link rename "<i class='uk-icon-pencil'></i>" @click.prevent=<% tag.name prefix='rename(\'' suffix='\', $event)' %> hidden=hidden :hidden='false' %>
+   </td>
+</tr>
+
+<% #main %>
+<div class='av-tag' :class='"<% tag.type parent %>" === "Image" ? "av-collage" : ""' x-data='{}'>
+   <% list.render skin="$TagHub#main" %>
+</div>
+
+<ul class='uk-pagination uk-text-left'>
+  <% list.prevLink text="<i class='uk-icon-arrow-left'></i>" prefix=<li> suffix=</li> default="<li class='uk-disabled'><span><i class='uk-icon-arrow-left'></i></span></li>" %>
+  <% list.nextLink text="<i class='uk-icon-arrow-right'></i>" prefix=<li> suffix=</li> default="<li class='uk-disabled'><span><i class='uk-icon-arrow-right'></i></span></li>" %>
+</ul>
+
+<script>
+  // Load additional script for Collage jQuery plugin
+  if ('<% tag.type parent %>' === 'Image') {
+    const script = document.createElement('script');
+
+    script.onload = function() {
+      $(function() {
+        let resizeTimer = null;
+
+        const collage = () => {
+          $('.av-collage').removeWhitespace().collagePlus({
+            allowPartialLastRow: true,
+            fadeSpeed: 'slow'
+          });
+        };
+
+        $('.av-collage').collageCaption();
+
+        $(window).bind('resize', function() {
+            $('.av-tagged-image').css('opacity', 0);
+            if (resizeTimer) clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(collage, 200);
+        });
+
+        collage();
+      });
+    };
+
+    script.src = '<% root.static ../../scripts/gallery.min.js %>';
+    document.head.appendChild(script);
+  }
+</script>
+
+<% #simple %>
+<li>
+   <a href='<% tag.href action=<% request.action encoding='form' %> %>'><% tag.name %></a>
+</li>

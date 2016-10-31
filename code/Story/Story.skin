@@ -1,0 +1,110 @@
+<% #main %>
+<% story.skin Story#date %>
+<% story.skin Story#preview %>
+<a name="comments" id="comments"></a>
+<ul class='uk-comment-list'><% story.comments %></ul>
+<div class='uk-margin-large-top'><% story.referrers %></div>
+
+<% #date %>
+<div class='uk-text-muted uk-h3 uk-margin-bottom'><% story.created date %></div>
+
+<% #content %>
+<article class='uk-article'>
+   <% story.link main <% story.title prefix="<h1 class='uk-article-title'>" suffix="</h1>" default=' ' %> %>
+   <div class='uk-article-meta uk-margin-bottom'>
+      <% gettext 'Posted by {0} at {1}' <% story.creator %> <% story.created time %> %>
+      <% story.tags link prefix=<% gettext 'in' suffix=' ' %> %>
+   </div>
+   <% story.text | story.format markdown %>
+</article>
+
+<% #preview %>
+<% story.skin Story#content %>
+<div class='uk-margin-large-bottom uk-margin-top'>
+   <% story.link edit <% gettext Edit %> class='uk-button uk-margin-right' %>
+   <% story.skin $Story#links %>
+</div>
+
+<% #edit %>
+<h1>
+   <% response.title %>
+   <% story.link . ' ' class='uk-icon-button uk-icon-link uk-text-middle' %>
+</h1>
+<div class='uk-article-meta'><% story.skin $HopObject#meta %></div>
+<form id='av-story-form' class='uk-margin-top uk-form uk-form-stacked' method="post" action="<% response.action %>">
+   <div class='uk-form-row'>
+      <label class='uk-form-label' for='title'>
+         <% gettext Title %>
+      </label>
+      <div class='uk-form-controls'>
+         <% story.input title class=uk-width-1-1 %>
+      </div>
+   </div>
+   <div class='uk-form-row'>
+      <label class='uk-form-label' for='text'>
+         <% gettext Text %>
+      </label>
+      <div class='uk-form-controls'>
+         <% story.textarea text rows=15 class=uk-width-1-1 %>
+      </div>
+   </div>
+   <div class='uk-form-row'>
+      <label class='uk-form-label' for='tags'>
+         <% gettext "Tags" %>
+         <i class='uk-icon-info-circle uk-text-muted' title='<% gettext 'Separated by commas' %>' data-uk-tooltip='{pos: "right"}'></i>
+      </label>
+      <div class='uk-form-controls'>
+         <% story.input tags class=uk-width-1-1 %>
+      </div>
+   </div>
+   <fieldset class='uk-margin-top'>
+      <legend><% gettext Options %></legend>
+      <div class='uk-form-row'>
+         <% gettext "The story is {0} and {1}" <% story.select status %> <% story.select mode %> %>
+         .
+      </div>
+      <div class='uk-form-row'>
+         <% gettext "Comments of the story are {0}" <% story.select commentMode %> %>.
+      </div>
+   </fieldset>
+   <fieldset class='uk-margin-top'>
+      <legend><% gettext Information %></legend>
+      <div class='uk-form-row'>
+         <% story.macro | link <% story.href %> data-value=<% story.macro %> data-text=<% gettext "Press CTRL & C to copy to clipboard." %> class='av-clipboard-copy' %>
+         <div><% story.comments summary %></div>
+         <div><% ngettext '{0} request' '{0} requests' <% story.requests default=0 %> %></div>
+      </div>
+   </fieldset>
+   <div class='uk-form-row uk-margin-top'>
+      <button class='uk-button uk-button-primary' type="submit" name="save" value="1">
+         <% gettext Save %>
+      </button>
+      <% story.link delete <% gettext Delete %> class='uk-button' %>
+      <a href='.' class="uk-button uk-button-link"><% gettext Cancel %></a>
+   </div>
+</form>
+
+<% #comment %>
+<% story.skin Story#date %>
+<% story.skin Story#content %>
+
+<% #history %>
+<li class='uk-margin-small-top'>
+   <a href='<% this.href %>' title='<% this.modified %>'>
+      <% this.abstract %>
+      <div class='uk-text-small uk-text-muted'>
+         <% this.creator %>, <% this.modified text %>
+      </div>
+   </a>
+</li>
+
+<% #permalink %>
+<% story.link main "<i class='uk-icon-link'></i>" class='uk-button uk-button-small uk-button-link' %>
+
+<% #links %>
+<div class='uk-button-group av-link-group'>
+   <% story.skin Story#permalink %>
+   <% story.link comment#form "<i class='uk-icon-comment-o'></i>" class='uk-button uk-button-small uk-button-link' %>
+   <% story.link main#comments <% story.comments count prefix="<i class='uk-icon-comments'></i> " %> class='uk-button uk-button-small uk-button-link' %>
+</div>
+

@@ -1,0 +1,219 @@
+plugins {
+  id 'com.github.jk1.dependency-license-report' version '2.0'
+}
+
+def helmaInstallDir = "${rootProject.buildDir}/install/antclick"
+
+tasks.build.dependsOn ':build', 'assemble'
+
+clean {
+  delete helmaInstallDir
+}
+
+dependencies {
+  implementation 'com.h2database:h2:1.4.200'
+}
+
+configurations {
+  // Wrapping implementation because it does not allow access to its files
+  // (i.e. cannot be resolved)
+  library.extendsFrom implementation
+}
+
+assemble {
+  group 'build'
+  dependsOn ':assemble'
+  dependsOn 'installHelma'
+  dependsOn 'installAntville'
+  dependsOn 'installJars'
+  dependsOn 'buildDatabase'
+  dependsOn 'buildLicenses'
+}
+
+task downloadHelma {
+  def url = rootProject.ext['helma.download.url']
+  def outputFile = file("${rootProject.buildDir}/tmp/helma.tgz")
+
+  outputs.file outputFile
+
+  doLast {
+    new URL(url).withInputStream { inputStream ->
+      outputFile.withOutputStream { it << inputStream }
+    }
+  }
+}
+
+// See https://docs.gradle.org/current/userguide/working_with_files.html#sec:unpacking_archives_example
+task installHelma(type: Copy) {
+  description 'Download and extract the Helma package.'
+  group 'installation'
+  dependsOn 'downloadHelma'
+
+  def inputFile = "${rootProject.buildDir}/tmp/helma.tgz"
+  def outputDir = helmaInstallDir
+
+  inputs.file inputFile
+  outputs.dir outputDir
+
+  from tarTree(inputFile).matching {
+    exclude '*/apps/test/**'
+    exclude '*/apps/welcome/**'
+    exclude '*/db/welcome/**'
+    exclude '*/docs/**'
+    exclude '*/extras/**'
+
+    eachFile { f ->
+      f.relativePath = new RelativePath(true, f.relativePath.segments.drop(1))
+    }
+
+    includeEmptyDirs = false
+  } into outputDir
+}
+
+task installAntville(type: Copy) {
+  description 'Install Antville as Helma application'
+  group 'installation'
+  dependsOn ':assemble', ':installAntville', 'installHelma', 'buildLicenses'
+
+  def appsProperties = "$antvilleBuildDir/tools/antclick/apps.properties"
+  def outputDir = "$helmaInstallDir/apps/antville"
+
+  inputs.dir antvilleInstallDir
+  inputs.file appsProperties
+
+  outputs.dir outputDir
+  outputs.file appsProperties
+
+  from antvilleInstallDir
+  into outputDir
+
+  doLast {
+    copy {
+      from appsProperties
+      into helmaInstallDir
+    }
+  }
+}
+
+task installJars(type: Copy) {
+  description 'Download additional JAR libraries.'
+  group 'Installation'
+  dependsOn 'installHelma'
+
+  def outputDir = "$helmaInstallDir/lib/ext"
+
+  inputs.files configurations.runtimeClasspath
+  outputs.dir outputDir
+
+  from configurations.runtimeClasspath
+  into outputDir
+}
+
+task buildDatabase(type: JavaExec) {
+  description 'Builds the H2 SQL database file.'
+  group 'build'
+  dependsOn ':assemble'
+
+  def inputFile = "$antvilleInstallDir/db/postgre.sql"
+  def outputDir = "$helmaInstallDir/db"
+
+  inputs.file inputFile
+  outputs.files "$outputDir/antville.mv.db"
+
+  def h2Jar = configurations.library.files.find { jar ->
+    jar.name.startsWith('h2')
+  }
+
+  classpath = files(h2Jar)
+  main = 'org.h2.tools.RunScript'
+
+  args = [
+    '-continueOnError',
+    '-script', inputFile,
+    '-url', "jdbc:h2:$outputDir/antville",
+    '-user', 'antville',
+    '-password', 'antville'
+  ]
+
+  standardOutput = new ByteArrayOutputStream()
+  ignoreExitValue true
+}
+
+task buildLicenses(type: Copy) {
+  description 'Build license files from server-side dependecies.'
+  group 'build'
+  dependsOn 'installJars'
+
+  def licensesDir = "$antvilleInstallDir/licenses"
+
+  inputs.files generateLicenseReport
+  outputs.dir licensesDir
+
+  from generateLicenseReport
+  into licensesDir
+}
+
+task assembleDist {
+  description 'Creates the AntClick download packages.'
+  group 'distribution'
+
+  dependsOn 'assemble'
+  dependsOn 'distZip'
+  dependsOn 'distTar'
+}
+
+task runH2Console(type: JavaExec) {
+  description 'Runs the H2 SQL database console.'
+  group 'Help'
+  dependsOn 'installJars'
+
+  def h2Jar = configurations.library.files.find { jar ->
+    jar.name.startsWith('h2')
+  }
+
+  classpath = files(h2Jar)
+
+  args = [
+    '-url', "jdbc:h2:$helmaInstallDir/db/antville",
+    '-user', 'antville',
+    '-password', 'antville'
+  ]
+
+  // standardOutput = new ByteArrayOutputStream()
+  // ignoreExitValue true
+}
+
+task distZip(type: Zip) {
+  description 'Creates the AntClick download package as Zip file.'
+  group 'distribution'
+  dependsOn 'assemble'
+
+  def version = project.distVersion()
+  def outputDir = "${rootProject.buildDir}/distributions"
+  def outputFile = "antclick-${version}.zip"
+
+  inputs.dir helmaInstallDir
+  outputs.file "$outputDir/$outputFile"
+
+  from helmaInstallDir
+  destinationDirectory = file(outputDir)
+  archiveFileName = outputFile
+}
+
+task distTar(type: Tar) {
+  description 'Creates the AntClick download package as Bzip2 file.'
+  group 'distribution'
+  dependsOn 'assemble'
+
+  def version = project.distVersion()
+  def outputDir = "${rootProject.buildDir}/distributions"
+  def outputFile = "antclick-${version}.tbz"
+
+  inputs.dir helmaInstallDir
+  outputs.file "$outputDir/$outputFile"
+
+  from helmaInstallDir
+  compression = Compression.BZIP2
+  destinationDirectory = file(outputDir)
+  archiveFileName = outputFile
+}
