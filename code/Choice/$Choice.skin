@@ -1,0 +1,25 @@
+<% #main %>
+<div class='uk-form-row'>
+   <label for='<% choice.id %>'>
+      <input type='radio' id='<% choice.id %>' name='choice' value='<% choice.id %>' <% if <% choice.selected %> is true then 'checked='checked'' %> />
+      <% choice.title %>
+   </label>
+</div>
+
+<% #edit %>
+<div class='av-choice uk-form-row'>
+   <div class='uk-form-label'>#<% param.index %></div>
+   <div>
+      <input type='text' name='title' class='uk-width-1-1' value='<% choice.title %>' />
+   </div>
+</div>
+
+<% #result %>
+<div class='uk-text-bold'><% choice.title %></div>
+<div class='uk-margin-bottom'>
+   <span style='width: <% choice.votes 300 default=1 %>px;' class='av-poll-result-bar'></span>
+   <span class='uk-text-middle'>
+      <% choice.votes % | format #.#% %>
+      <% ngettext '{0} vote' '{0} votes' <% choice.votes %> prefix='(' suffix=')' %>
+   </span>
+</div>

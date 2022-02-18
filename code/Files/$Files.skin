@@ -1,0 +1,25 @@
+<% #main %>
+<h1>
+   <% response.title %>
+   <% files.link create ' ' class='uk-icon-button uk-icon-plus uk-text-middle' %>
+</h1>
+<% files.link . <% gettext All %> %>
+<% files.link user <% membership.name %> prefix=" | " %>
+<% response.pager %>
+<table class='uk-table uk-table-striped uk-table-hover uk-table-condensed'>
+   <thead>
+      <tr>
+         <th class='uk-text-right'><i class='uk-icon-download'></i></th>
+         <th></th>
+         <th><% gettext Name %></th>
+         <th><% gettext Size %></th>
+         <th><% gettext Account %></th>
+         <th><% gettext Modified %></th>
+         <th></th>
+      </tr>
+   </thead>
+   <tbody>
+      <% response.list %>
+   </tbody>
+</table>
+<% response.pager %>

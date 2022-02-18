@@ -1,0 +1,121 @@
+<% #main %>
+<% site.stories %>
+
+<% #preview %>
+<li><% site.title | site.link %> <span class="small">(<% site.modified short
+prefix="Last update: " default="None so far" %>)</span></li>
+
+<% #welcome %>
+<article class='uk-article'>
+   <h1 class='uk-article-title'><% gettext Welcome %></h1>
+   <p class='uk-article-meta'>
+      <% gettext "Created by {0} on {1}." <% site.creator %> <% site.created long %> %>
+   </p>
+   <p><% gettext "Welcome to {0}." <% site.title %> %></p>
+</article>
+
+<% #navigation %>
+<li><% site.link main <% gettext Start prefix="<i class='uk-icon-home'></i> " %> %></li>
+<li><% site.tags.link main <% gettext Tags %> %></li>
+<li><% site.galleries.link main <% gettext Galleries %> %></li>
+<% site.comments.link main <% gettext Comments %> prefix=<li> suffix=</li> %>
+<li><% site.link contact <% gettext Contact %> %></li>
+<li><% site.link rss.xml "<i class='uk-icon-rss'></i> RSS" %></li>
+<li class='uk-nav-divider'></li>
+<% site.stories.link create <% gettext "Add Story" prefix="<i class='uk-icon-plus'></i> " %> prefix="<li>" suffix=</li> %>
+<% site.stories.link main <% gettext Stories %> prefix=<li> suffix=</li> %>
+<% site.images.link main <% gettext Images %> prefix=<li> suffix=</li> %>
+<% site.files.link main <% gettext Files %> prefix=<li> suffix=</li> %>
+<% site.polls.link main <% gettext Polls %> prefix=<li> suffix=</li> %>
+<li class='uk-nav-divider'></li>
+<% site.link edit <% gettext Settings prefix="<i class='uk-icon-cog'></i> " %> prefix=<li> suffix=</li> %>
+<% site.layout.link main <% gettext Layout %> prefix=<li> suffix=</li> %>
+<% site.members.link main <% gettext Members %> prefix=<li> suffix=</li> %>
+<% site.link referrers <% gettext Referrers %> prefix=<li> suffix=</li> %>
+<li class='uk-nav-divider'></li>
+<li><% root.title | root.link %></li>
+
+<% #search %>
+<li class='uk-margin-left'>
+   <form class='uk-form' method='post' action='<% site.href search %>'>
+      <input type='text' class='uk-width-1-1' name='q' value='<% request.q encoding="form" %>' required placeholder='<% gettext Search %>'>
+   </form>
+</li>
+
+<% #robots %>
+# See http://www.robotstxt.org for more information
+#User-agent: *
+#Disallow: /
+#User-agent: BadBot
+#Disallow: /private/path
+
+<% #page %>
+<!DOCTYPE html>
+<html <% site.locale prefix='lang=' %> prefix='og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#'>
+   <head <% response.schema prefix="itemscope itemtype='" suffix="'" %>>
+      <meta charset='utf-8'>
+      <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+      <meta name='viewport' content='width=device-width, initial-scale=1'>
+      <% response.meta %>
+      <title><% response.title %></title>
+      <link rel='canonical' href='<% href %>'>
+      <link rel='icon' type='image/x-icon' href='<% image /favicon.png url %>'>
+      <link rel='shortcut icon' type='image/x-icon' href='<% image /favicon.png url %>'>
+      <link rel='apple-touch-icon' href='<% image /favicon.png url %>'>
+      <% response.links %>
+      <link rel='stylesheet' href='<% site.href main.css %>'>
+      <script src='<% site.href main.js %>'></script>
+   </head>
+   <body class='av-16'>
+      <% site.skin $Site#header %>
+      <div class='uk-grid av-page'>
+         <div class='uk-width-medium-7-10'>
+            <% response.message prefix="<div class='uk-alert' data-uk-alert>" suffix=</div> %>
+            <% response.body %>
+         </div>
+         <div class='uk-width-3-10 av-menu'>
+            <% site.skin $Site#menuButton %>
+            <div class='uk-margin-large-left av-border-left av-navigation'>
+               <% membership.status %>
+               <ul class='uk-nav uk-nav-side'>
+                  <li class='uk-nav-divider'></li>
+                  <% site.skin Site#navigation %>
+                  <li class='uk-nav-divider'></li>
+                  <% site.skin Site#search %>
+                  <% site.calendar prefix="<li class='uk-nav-header'></li>
+                     <li class='uk-margin-left uk-text-small'>" suffix='</li>' %>
+               </ul>
+            </div>
+         </div>
+      </div>
+      <% site.skin $Site#footer %>
+   </body>
+</html>
+
+<% #javascript %>
+function openPopup(img, width, height) {
+   if (img && width && height) {
+      width = Math.min(width + 36, 640);
+      height = Math.min(height + 30, 480);
+      var win = openPopup.window;
+      if (win && win.location && !win.closed) {
+         win.close();
+      }
+      win = window.open(img, 'antvillePopupWindow-' + width + '-' + height,
+      'toolbar=no,location=no,directories=no,status=no,scrollbars=yes,resizable=yes,width=' + width + ',height=' + height);
+      //win.focus();
+      openPopup.window = win;
+   }
+}
+
+<% #values %>
+<% value 'background color' #ffffff %>
+<% value 'title color' #444444 %>
+<% value 'text color' #444444 %>
+<% value 'muted color' #999999 %>
+<% value 'hover color' #d50000 %>
+<% value 'link color' #ff4040 %>
+<% value 'text font' 'Helvetica, Arial, sans-serif' %>
+<% value 'title font' 'Helvetica, Arial, sans-serif' %>
+
+<% #stylesheet %>

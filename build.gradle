@@ -1,0 +1,291 @@
+plugins {
+  id 'base'
+  id 'java'
+
+  id 'com.github.node-gradle.node' version '3.1.1'
+  id 'org.ajoberstar.grgit' version '4.1.1' apply false
+}
+
+import org.ajoberstar.grgit.Grgit
+
+tasks.build.dependsOn 'assemble'
+
+node {
+  version = '16.13.1'
+  yarnVersion = '1.22.15'
+  download = true
+}
+
+allprojects {
+  apply plugin: 'java'
+
+  repositories {
+    mavenCentral()
+  }
+
+  project.ext.distVersion = { ->
+    def json = new groovy.json.JsonSlurper()
+    def packageData = json.parse(file("${rootProject.projectDir}/package.json"))
+    return packageData.version.substring(0, packageData.version.size() - 2)
+  }
+
+  project.ext.antvilleBuildDir = "${rootProject.buildDir}/tmp/antville"
+  project.ext.antvilleInstallDir = "${rootProject.buildDir}/install/antville"
+
+  project.ext.antvilleDistFiles = copySpec {
+    from fileTree(antvilleBuildDir).matching {
+    }
+  }
+
+  // Hide some purely Java-related tasks
+  project.tasks.buildDependents.group = null;
+  project.tasks.buildNeeded.group = null;
+  project.tasks.classes.group = null;
+  project.tasks.jar.group = null;
+  project.tasks.javadoc.group = null;
+  project.tasks.testClasses.group = null;
+}
+
+version = distVersion()
+
+dependencies {
+  implementation 'org.commonmark:commonmark:0.18.1'
+  implementation 'org.commonmark:commonmark-ext-autolink:0.18.1'
+  implementation 'org.commonmark:commonmark-ext-gfm-strikethrough:0.18.1'
+  implementation 'org.commonmark:commonmark-ext-gfm-tables:0.18.1'
+  implementation 'org.jsoup:jsoup:1.14.3'
+  implementation 'rome:rome:1.0'
+
+  implementation('org.lesscss:lesscss:1.7.0.1.1') {
+    exclude group: 'org.mozilla', module: 'rhino'
+    exclude group: 'org.slf4j', module: 'slf4j-api'
+    exclude group: 'org.slf4j', module: 'slf4j-simple'
+  }
+}
+
+task assemble(type: Copy, overwrite: true) {
+  dependsOn 'installAntville'
+  dependsOn 'installJars'
+  dependsOn 'buildStaticFiles'
+
+  from fileTree(antvilleBuildDir).matching {
+    exclude 'node_modules'
+    exclude 'package.json'
+    exclude 'tests'
+    exclude 'tools/client'
+    exclude 'tools/antclick'
+    exclude 'yarn.lock'
+  } into antvilleInstallDir
+}
+
+task installAntville {
+  description 'Clone the Antville repository and remove all unnecessary files.'
+  group 'installation'
+
+  def tempDir = "$project.buildDir/tmp/repo"
+
+  outputs.dirs tempDir, antvilleBuildDir
+
+  doFirst {
+    delete tempDir
+    Grgit.clone(dir: tempDir, uri: project.ext['antville.repo.url'])
+  }
+
+  doLast {
+    def git = Grgit.open(dir: tempDir)
+    def hash = git.head().abbreviatedId
+    def date = new Date().format('d MMM yyyy')
+
+    copy {
+      from "$tempDir/code/app.properties"
+      into "$antvilleBuildDir/code"
+      filter { line -> line.replaceAll('(version =) 0.0.0', "\$1 $version.$hash")
+        .replaceAll('(buildDate =) 18 Oct 1971', "\$1 $date")
+      }
+    }
+
+    copy {
+      from fileTree(tempDir).matching {
+        exclude 'code/app.properties'
+        exclude '*gradle*'
+        exclude '.*'
+        exclude 'i18n/*.po*'
+      } into antvilleBuildDir
+    }
+  }
+}
+
+task installJars(type: Copy) {
+  description 'Download required JAR libraries.'
+  group 'installation'
+  dependsOn 'installAntville'
+
+  def outputDir = "$antvilleBuildDir/lib"
+
+  outputs.dir outputDir
+
+  from configurations.runtimeClasspath
+  into outputDir
+}
+
+task yarnPolicy(type: YarnTask) {
+  args = ['policies', 'set-version', node.yarnVersion.supplier.value]
+}
+
+task installNodeModules(type: YarnTask) {
+  description 'Download required Node modules.'
+  group 'build'
+  dependsOn 'installAntville'
+
+  inputs.files "$antvilleBuildDir/package.json"
+  outputs.dir "$antvilleBuildDir/node_modules"
+
+  args = ['-s', 'install']
+
+  execOverrides {
+    it.workingDir = antvilleBuildDir
+  }
+}
+
+task buildStaticFiles(type: Copy) {
+  description 'Build fonts, client-side scripts and stylesheets.'
+  group 'build'
+
+  dependsOn 'installAntville'
+  dependsOn 'installNodeModules'
+  dependsOn 'buildMainScript'
+  dependsOn 'buildMainStyles'
+  dependsOn 'buildEditorScript'
+  dependsOn 'buildEditorStyles'
+  dependsOn 'buildGalleryScript'
+  dependsOn 'buildLicenses'
+
+  def inputDir = "$antvilleBuildDir/node_modules/uikit/dist/fonts"
+  def outputDir = "$antvilleBuildDir/static/fonts"
+
+  inputs.dir inputDir
+  outputs.dir outputDir
+
+  from inputDir
+  into outputDir
+}
+
+['main', 'editor', 'gallery'].each { name ->
+  task "build${name.capitalize()}Script" (type: YarnTask) {
+    description "Build the ${name} client-side scripts."
+    group 'build'
+    dependsOn 'installNodeModules'
+
+    def inputFile = "tools/client/${name}.js"
+    def outputFile = "static/scripts/${name}.min.js"
+
+    inputs.files "$antvilleBuildDir/$inputFile"
+    outputs.files "$antvilleBuildDir/$outputFile"
+
+    args = ['-s', 'browserify', inputFile, '-o', outputFile, '-g', 'uglifyify']
+
+    execOverrides {
+      it.workingDir = antvilleBuildDir
+    }
+  }
+}
+
+['main', 'editor'].each { name ->
+  task "build${name.capitalize()}Styles" (type: YarnTask) {
+    description "Build the ${name} stylesheet."
+    group 'build'
+    dependsOn 'installNodeModules'
+
+    def inputFile = "tools/client/${name}.less"
+    def outputFile = "static/styles/${name}.min.css"
+
+    inputs.files "$antvilleBuildDir/$inputFile"
+    outputs.files "$antvilleBuildDir/$outputFile"
+
+    args = ['-s', 'lessc', '--clean-css', inputFile, outputFile]
+
+    execOverrides {
+      it.workingDir = antvilleBuildDir
+    }
+  }
+}
+
+task buildLicenses(type: YarnTask) {
+  description 'Build licenses file from client-side dependecies.'
+  group 'build'
+  dependsOn 'installNodeModules'
+
+  def outputFile = "$antvilleBuildDir/static/licenses.txt"
+
+  inputs.file "$antvilleBuildDir/package.json"
+  outputs.file outputFile
+
+  args = ['-s', 'licenses', 'generate-disclaimer']
+
+  execOverrides {
+    it.workingDir = antvilleBuildDir
+    it.standardOutput = new FileOutputStream(outputFile)
+  }
+}
+
+task jsdoc(type: YarnTask) {
+  description 'Generates JavaScript API documentation for the main source code.'
+  group 'documentation'
+  dependsOn 'installNodeModules'
+
+  def inputDir = "$antvilleBuildDir/code"
+  def outputDir = "${project.buildDir}/docs/jsdoc"
+
+  inputs.dir inputDir
+  outputs.dir outputDir
+
+  args = ['-s', 'jsdoc', '-r', '-d', outputDir, inputDir]
+
+  execOverrides {
+    it.workingDir = antvilleBuildDir
+  }
+}
+
+task assembleDist {
+  description 'Creates the Antville download packages.'
+  group 'distribution'
+
+  dependsOn 'assemble'
+  dependsOn 'distZip'
+  dependsOn 'distTar'
+}
+
+task distZip(type: Zip) {
+  description 'Creates the Antville download package as Zip file.'
+  group 'distribution'
+  dependsOn 'assemble'
+
+  def version = project.distVersion()
+  def outputDir = "${project.buildDir}/distributions"
+  def outputFile = "antville-${version}.zip"
+
+  inputs.dir antvilleInstallDir
+  outputs.file "$outputDir/$outputFile"
+
+  from antvilleInstallDir
+  destinationDirectory = file(outputDir)
+  archiveFileName = outputFile
+}
+
+task distTar(type: Tar) {
+  description 'Creates the Antville download package as Bzip2 file.'
+  group 'distribution'
+  dependsOn 'assemble'
+
+  def version = project.distVersion()
+  def outputDir = "${project.buildDir}/distributions"
+  def outputFile = "antville-${version}.tbz"
+
+  inputs.dir antvilleInstallDir
+  outputs.file "$outputDir/$outputFile"
+
+  from antvilleInstallDir
+  compression = Compression.BZIP2
+  destinationDirectory = file(outputDir)
+  archiveFileName = outputFile
+}

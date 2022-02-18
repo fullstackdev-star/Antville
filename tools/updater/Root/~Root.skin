@@ -1,0 +1,62 @@
+<html>
+<head>
+   <script type="text/javascript"
+         src="http://jqueryjs.googlecode.com/files/jquery-1.2.3.min.js"></script>
+</head>
+<body>
+<style>
+#status {
+   font: normal 12pt sans-serif;
+   color: green;
+   margin-left: 0.5em;
+}
+</style>
+<script type="text/javascript">
+$(document).ready(function() {
+   $("#status").hide().html("is running...");
+});
+
+var running = true;
+var error = false;
+
+var scheduler = setInterval(function() {
+   $.ajax({
+      async: true,
+      type: "GET",
+      url: '<% root.href out %>',
+      dataType: "text",
+      error: function(xmlObject, error, exception) {
+         // ...
+      },
+      success: function(result) {
+         result = eval(result);
+         result.log && $("#out").append(result.log);
+         if (result.status === "running") {
+            // ...?
+         } else if (result.status === "idle") {
+            // ...?
+         } else {
+            if (result.status === "finished") {
+               $("#status").css("color", "blue").
+                     html("finished successfully :)").show();
+            } else if (result.status === "failed") {
+               $("#status").css("color", "red").html("failed :(").show();
+            }
+            clearInterval(status);
+            clearInterval(scheduler);
+         }
+      }
+   });
+   return;
+}, 5000);
+
+var status = setInterval(function() {
+   $("#status").toggle();
+}, 700);
+</script>
+
+<h3>Antville Update 1.2 <span id="status">Running</status></h3>
+<pre id="out"></pre>
+
+</body>
+</html>

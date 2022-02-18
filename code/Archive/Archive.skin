@@ -1,0 +1,6 @@
+<% #main %>
+<% archive.stories %>
+<ul class='uk-pagination uk-text-left'>
+  <% archive.link previous "<i class='uk-icon-arrow-left'></i>" prefix=<li> suffix=</li> default="<li class='uk-disabled'><span><i class='uk-icon-arrow-left'></i></span></li>" %>
+  <% archive.link next "<i class='uk-icon-arrow-right'></i>" prefix=<li> suffix=</li> default="<li class='uk-disabled'><span><i class='uk-icon-arrow-right'></i></span></li>" %>
+</ul>

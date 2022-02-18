@@ -1,0 +1,48 @@
+<% #meta %>
+<% if <% this.creator %> is null then '' else
+   <% gettext 'Created by {0} on {1}' <% this.creator %> <% this.created short %> %>
+%>
+<% if <% this.created %> is <% this.modified %> then '' else
+   <% gettext 'Last modified by {0} on {1}' <% this.modifier %> <% this.modified short %> prefix=<br> %>
+%>
+
+<% #confirm %>
+<h1><% gettext Warning! %></h1>
+<p class='uk-text-bold'><% param.text %></p>
+<p>
+  <% gettext 'Please be aware of the fact that there is no “undo”, so if you click “Proceed” below the changes will be applied irreversibly.' %>
+</p>
+<p>
+  <% gettext 'Click “Cancel” now if you are not really sure you want to proceed.' %>
+</p>
+<form action="<% response.action %>" method="post">
+  <% param.extra %>
+  <p>
+    <button class='uk-button uk-button-danger' name="proceed" value="1"><% gettext Proceed %></button>
+    <a href='<% session.location %>' class="uk-button uk-button-link"><% gettext Cancel %></a>
+  </p>
+</form>
+
+<% #source %>
+<div class='uk-text-right uk-text-muted uk-text-small'>
+   <% gettext Via %>: <% this.site.title | this.link %>
+</div><!-- This comment prevents Markdown from rendering an empty paragraph.
+
+--><% #notify_create %>
+<% gettext 'Hello {0}.' <% membership.name %> %>
+
+<% gettext '{0} has added {1} to the site {2}:' <% this.modifier %> <% gettext <% this.kind prefix='a ' %> %> <% site.title %> %>
+<% this.href %>
+
+<% gettext "Best regards." %>
+<% gettext "The Management" %>
+
+<% #notify_edit %>
+<% gettext 'Hello {0}.' <% membership.name %> %>
+
+<% gettext '{0} has modified {1} at the site {2}:' <% this.modifier %> <% gettext <% this.kind prefix='a ' %> %> <% site.title %> %>
+<% this.href %>
+
+<% gettext "Best regards." %>
+<% gettext "The Management" %>
+<% // This comment macro simply adds a linebreak to format the message nicely %>
